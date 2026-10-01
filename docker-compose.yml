@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16
+    container_name: astromed-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-astromed}
+    ports:
+      - "${POSTGRES_PORT:-5438}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-astromed}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: astromed:latest
+    container_name: astromed-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-astromed}?schema=public
+      UPLOAD_DIR: /app/uploads
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      # Runtime overrides for Nuxt runtimeConfig (secrets stay in server .env)
+      NUXT_AUTH_SECRET: ${AUTH_SECRET:-change-me}
+      NUXT_OG_IMAGE_SECRET: ${NUXT_OG_IMAGE_SECRET:-change-me}
+      NUXT_SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      NUXT_SMTP_PORT: ${SMTP_PORT:-587}
+      NUXT_SMTP_USER: ${SMTP_USER:-}
+      NUXT_SMTP_PASS: ${SMTP_PASS:-}
+      NUXT_MAIL_TO: ${NUXT_MAIL_MESSAGE_TO:-info@astromed-co.com}
+      NUXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:3000}
+    volumes:
+      - ./uploads:/app/uploads
+    # Auto-run prisma migrate deploy before starting the Nuxt server
+    command: ["sh", "-c", "npx prisma migrate deploy && node .output/server/index.mjs"]
+
+volumes:
+  postgres_data:
