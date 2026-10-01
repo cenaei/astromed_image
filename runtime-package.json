@@ -1,0 +1,14 @@
+{
+  "name": "astromed-runtime",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
+    "prisma": "^6.19.3",
+    "tsx": "^4.19.2"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}

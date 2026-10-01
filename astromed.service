@@ -1,0 +1,23 @@
+[Unit]
+Description=AstroMed Nuxt SSR server
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/srv/astromed
+EnvironmentFile=/srv/astromed/.env
+ExecStart=/usr/bin/node /srv/astromed/.output/server/index.mjs
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/astromed/uploads /srv/astromed/.data
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target
